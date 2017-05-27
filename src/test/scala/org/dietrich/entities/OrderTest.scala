@@ -16,4 +16,9 @@ class OrderTest extends UnitSpec {
     o.fillOrder()
     assert(o.delivered.length==2)
   }
+  
+  it should "have a cost of 1.50"  in {
+    o.getBill()
+    assert(o.totalCost==1.50)
+  }
 }
