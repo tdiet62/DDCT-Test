@@ -20,6 +20,7 @@ object CafeCap extends App {
     println(orderDescription+" :\r\n")
     order = new Order()
     order.addItems(items)
+    order.fillOrder()
     order.getBill()
   println("Service Charge is: \t\t"+order.serviceCharge+"\t@ "+order.serviceChargePercentage.setScale(2)+"%")
   println("Total Cost of Order is: \t\t"+order.totalCost)
