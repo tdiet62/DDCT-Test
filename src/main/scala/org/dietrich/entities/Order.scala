@@ -3,73 +3,66 @@ package org.dietrich.entities
 import scala.math.BigDecimal
 
 class Order {
-  var ordered: List[String] = List[String]()
-  var delivered: List[Item] = List[Item]()
-  var serviceChargePercentage: BigDecimal = 0.00
-  var serviceCharge: BigDecimal = 0.00
-  var totalCost: BigDecimal = 0.00
-  var preChargeCost: BigDecimal = 0.00
-  var menu: Menu = new Menu()
 
-  def addItem(item: String) {
-    ordered = item :: ordered
-  }
+  def fillOrder(orders: List[String], printOrder: Boolean): List[Item] = {
 
-  def addItems(items: List[String]) {
-    for (item <- items) {
-      addItem(item)
-    }
-  }
-
-  def fillOrder() {
-    for (itemName <- ordered) {
+    val menu: Menu = new Menu()
+    var delivered: List[Item] = List[Item]()
+    for (itemName <- orders) {
       var item: Item = menu.menu.get(itemName).get
       delivered = item :: delivered
-      addItemCost(item)
+      if (printOrder)
+        printItem(item.name, item.cost)
     }
+    delivered
   }
 
-  def getBill(): BigDecimal = {
-    //reset everything - bill is always calculated complete fresh
-    preChargeCost = 0.00
-    totalCost = 0.00
-    serviceCharge = 0.00
-    serviceChargePercentage = 0.00
-    delivered = List[Item]()
-    fillOrder()
-    serviceCharge = (preChargeCost * serviceChargePercentage).setScale(2,BigDecimal.RoundingMode.HALF_DOWN)
-    totalCost = preChargeCost + serviceCharge
+  def getBill(orders: List[String], printOrder: Boolean): BigDecimal = {
+    val delivered = fillOrder(orders, printOrder)
+    val totalCost = getPreChargeCost(delivered) + getServiceCharge(delivered, printOrder)
+    if (printOrder) printToPay(totalCost)
     return totalCost
   }
 
-  def addItemCost(item: Item) {
-    var name: String = item.name
-    var cost: BigDecimal = item.cost.setScale(2)
-    println(f"$name%-40s $cost%3.2f")
-    preChargeCost += item.cost
-    checkForServiceChargeMeal(item)
+  def getServiceCharge(delivered: List[Item], printOrder: Boolean): BigDecimal = {
+    var serviceCharge: BigDecimal = 0.0
+    val serviceChargePercentage: BigDecimal = getServiceChargePercentage(delivered, printOrder)
+    delivered.foreach((item: Item) => serviceCharge += item.cost * serviceChargePercentage)
+    if (printOrder)
+      printServiceCharge(serviceCharge, serviceChargePercentage)
+    serviceCharge
   }
 
-  def checkForServiceChargeMeal(item: Item) {
-    item.food match {
-                      case true => {
-                                      if (serviceChargePercentage == 0.00) {
-                                        serviceChargePercentage = 0.10
-                                      }
-                                      checkForServiceChargeHotFood(item)
-                                    }
-                      case false => //do nothing
-                    }
+  def getPreChargeCost(delivered: List[Item]): BigDecimal = {
+    var preCharge: BigDecimal = 0.00
+    delivered.foreach((item: Item) => preCharge += item.cost)
+    preCharge
   }
 
-  def checkForServiceChargeHotFood(item: Item) {
-    //implicit that we are dealing with a 'food' item here, as this method only called where item is 'food'
-    item.hot match {
-                      case true => {
-                        serviceChargePercentage = 0.20
-                      }
-                      case false => //do nothing
-                    }
-   }
+  def getServiceChargePercentage(items: List[Item], printOrder: Boolean): BigDecimal = {
+    items.reduceLeft(
+      (i1: Item, i2: Item) =>
+        {
+          if (i1.serviceChargePercentage > i2.serviceChargePercentage)
+            i1
+          else i2
+        }).serviceChargePercentage;
+  }
+
+  def printToPay = (totalCost: BigDecimal) => {
+    val toPay = "To Pay"
+    val orderCost: BigDecimal = totalCost.setScale(2)
+    println(f"$toPay%-50s $orderCost%3.2f")
+  }
+
+  def printItem = (name: String, cost: BigDecimal) =>
+    {
+      println(f"$name%-50s $cost%3.2f")
+    }
+
+  def printServiceCharge(sc: BigDecimal, scp: BigDecimal) = {
+    val intro: String = "Service Charge"
+    println(f"\r\n$intro%-50s $sc%3.2f @ $scp%1.2f" + "%")
+  }
 
 }

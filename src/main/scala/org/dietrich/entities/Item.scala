@@ -1,8 +1,9 @@
 package org.dietrich.entities
 
-class Item(n:String="",f:Boolean = false,h:Boolean = false,c:BigDecimal = 0.0) {
-  var name:String = n;
-  var food:Boolean = f;
-  var hot:Boolean= h;
-  var cost:BigDecimal = c;
+class Item(n:String="",f:Boolean = false,h:Boolean = false,c:BigDecimal = 0.0,s:BigDecimal =0.0) {
+  val name:String = n;
+  val food:Boolean = f;
+  val hot:Boolean= h;
+  val cost:BigDecimal = c;
+  val serviceChargePercentage:BigDecimal = s;
 }
